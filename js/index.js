@@ -59,11 +59,13 @@ var Banner = function(selector) {
   this.timeId = null;
   // 调用初始化方法
   this.init();
+  
 };
 // 初始化
 Banner.prototype.init = function() {
   this.autoplay();
   this.seamless();
+  this.swipeAble();
 };
 // 自动播放
 Banner.prototype.autoplay = function() {
@@ -91,7 +93,6 @@ Banner.prototype.seamless = function() {
       //在做位移
       that.setTranslateX(-that.index * that.width);
     }
-
     // 无缝滑动
     // 监听第1张（索引为1）到第8张（索引是0）的切换 瞬间定位到第8张（索引8）
     else if(that.index <= 0) {
@@ -101,7 +102,17 @@ Banner.prototype.seamless = function() {
       //在做位移
       that.setTranslateX(-that.index * width);
     }
+
+    //切换完图片后切换点 index取值范围1-8
+    that.togglePoint();
   });
+};
+// 点切换
+Banner.prototype.togglePoint = function() {
+  // 去掉之前的背景
+  this.listBox.querySelector('li.now').classList.remove('now');
+  // 给当前的加上
+  this.listBox.querySelectorAll('li')[this.index -1].classList.add('now');
 };
 // 添加过渡
 Banner.prototype.addTransition = function() {
@@ -113,8 +124,62 @@ Banner.prototype.removeTransition = function() {
   this.imgsBox.style.transition = 'none';
   this.imgsBox.style.webkitTransition = 'none';
 };
-// 位移
+// 设置定位
 Banner.prototype.setTranslateX = function(translateX) {
   this.imgsBox.style.transform = 'translateX('+translateX+'px)';
   this.imgsBox.style.webkitTransform = 'translateX('+translateX+'px)';
+};
+// 滑动功能
+Banner.prototype.swipeAble = function() {
+  // 记录起始点的x轴坐标 滑动的过程当中，获取当前点的x轴坐标
+  // 两个点作比较，差就是图片需要位移的距离
+  var that = this;
+  // 触摸开始事件
+  // 起始的位置
+  var startX = 0;
+  // 滑动额距离
+  var distanceX = 0;
+  that.imgsBox.addEventListener('touchstart',function(e) {
+    startX = e.changedTouches[0].clientX;
+    clearInterval(that.timeId);
+  });
+  // 开始滑动
+  that.imgsBox.addEventListener('touchmove',function(e) {
+    var moveX = e.changedTouches[0].clientX;
+    // 改变的距离
+    distanceX = moveX - startX;
+    // 计算 图片容器的位移
+    // 将要移动的位置 = 原来的位置 + 改变的距离
+    var translateX = -that.index*that.width + distanceX;
+    
+    // 设置位移 不需要过渡
+    that.removeTransition();
+    that.setTranslateX(translateX);
+  });
+  // 滑动结束
+  that.imgsBox.addEventListener('touchend',function() {
+    // 判断滑动的距离
+    //如果距离小于容器的三分之一 吸附回去
+    if(Math.abs(distanceX) < that.width / 3) {
+      that.addTransition();
+      that.setTranslateX(-that.index*that.width);
+      
+    } else {
+      // 如果大于三分之一 动画的切换
+      // 右滑 上一张 
+      if(distanceX > 0) {
+        that.index--;
+      }
+       // 左滑 下一张 
+      else {
+        that.index++;
+      }
+      // 动画的切换
+      that.addTransition();
+      that.setTranslateX(-that.index * that.width);
+    }
+
+    // 手指离开，开启自动播放
+    that.autoplay();
+  });
 };
