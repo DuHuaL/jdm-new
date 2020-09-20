@@ -57,6 +57,8 @@ var Banner = function(selector) {
   this.index = 1;
   // 初始化定时器
   this.timeId = null;
+  // 轮播速度
+  this.speed = 2000;
   // 调用初始化方法
   this.init();
   
@@ -77,7 +79,7 @@ Banner.prototype.autoplay = function() {
     that.addTransition();
     // 位移
     that.setTranslateX(-that.index * that.width);
-  },1000) 
+  },that.speed);
 };
 // 无缝的衔接
 Banner.prototype.seamless = function() {
@@ -139,8 +141,12 @@ Banner.prototype.swipeAble = function() {
   var startX = 0;
   // 滑动额距离
   var distanceX = 0;
+  // 起始时候的时间
+  var startTime = 0;
   that.imgsBox.addEventListener('touchstart',function(e) {
     startX = e.changedTouches[0].clientX;
+    // 开始的时间
+    startTime = Date.now();
     clearInterval(that.timeId);
   });
   // 开始滑动
@@ -158,13 +164,13 @@ Banner.prototype.swipeAble = function() {
   });
   // 滑动结束
   that.imgsBox.addEventListener('touchend',function() {
-    // 判断滑动的距离
-    //如果距离小于容器的三分之一 吸附回去
-    if(Math.abs(distanceX) < that.width / 3) {
-      that.addTransition();
-      that.setTranslateX(-that.index*that.width);
-      
-    } else {
+    //最后一个功能体感速度 进行切换
+    // 速度 = 距离 / 时间
+    // 结束的时间
+    var t = Date.now() - startTime;// 单位毫秒
+    var v = Math.abs(distanceX) / t;
+    // 体感速度默认0.3
+    if (v > 0.3) {
       // 如果大于三分之一 动画的切换
       // 右滑 上一张 
       if(distanceX > 0) {
@@ -177,9 +183,34 @@ Banner.prototype.swipeAble = function() {
       // 动画的切换
       that.addTransition();
       that.setTranslateX(-that.index * that.width);
+    } else {
+      // 判断滑动的距离
+      //如果距离小于容器的三分之一 吸附回去
+      if(Math.abs(distanceX) < that.width / 3) {
+        that.addTransition();
+        that.setTranslateX(-that.index*that.width);
+        
+      } else {
+        // 如果大于三分之一 动画的切换
+        // 右滑 上一张 
+        if(distanceX > 0) {
+          that.index--;
+        }
+        // 左滑 下一张 
+        else {
+          that.index++;
+        }
+        // 动画的切换
+        that.addTransition();
+        that.setTranslateX(-that.index * that.width);
+      }
     }
-
     // 手指离开，开启自动播放
+    clearInterval(that.timeId);// 严谨
     that.autoplay();
+    //重置参数，严谨
+    startX = 0;
+    startTime = 0;
+    distanceX = 0;
   });
 };
