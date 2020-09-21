@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded',function() {
     // 在入口中实例化对象
     new Search('.jd_header_box');
     new Banner('.jd_banner');
+    new DownTime('.sk_time');
 });
 // 面向对象的方式写
 //1.搜索的构造函数
@@ -10,7 +11,7 @@ var Search = function(selector) {
   this.el = document.querySelector(selector);
   this.bannerHeight = document.querySelector('.jd_banner').offsetHeight;
   // 在构造函数中调用原型上的方法
-  this.init(selector);
+  this.init();
 };
 //2.在搜索的构造函数上添加方法
 //2-1初始化
@@ -213,4 +214,38 @@ Banner.prototype.swipeAble = function() {
     startTime = 0;
     distanceX = 0;
   });
+};
+
+//秒杀倒计时
+var DownTime = function(selector) {
+  this.el = document.querySelector(selector);
+  this.time = 2 * 60 * 60;
+  this.timer = null;
+  this.init();
+}
+DownTime.prototype.init = function() {
+  var that = this;
+  var spans = that.el.querySelectorAll('span'); 
+  //需求
+  //1、假设一个时间 倒计时的时间为两小时
+  //2、 每隔一秒修改黑色容器内的数字
+  that.timer = setInterval(function(){
+    that.time--;
+    var h = Math.floor(that.time/3600);
+    var m = Math.floor(that.time%3600/60);
+    var s = Math.floor(that.time%60);
+    //时
+    spans[0].innerHTML = Math.floor(h/10);
+    spans[1].innerHTML = h%10;
+    //分
+    spans[3].innerHTML = Math.floor(m/10);
+    spans[4].innerHTML = m%10;
+    //秒
+    spans[6].innerHTML = Math.floor(s/10);
+    spans[7].innerHTML = s%10;
+    //倒计时结束
+    if(that.time === 0) {
+      clearInterval(that.timer);
+    }
+  },1000);
 };
